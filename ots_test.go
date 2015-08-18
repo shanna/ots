@@ -1,9 +1,9 @@
 package ots
 
 import (
-  "github.com/bmizerany/assert"
-  "testing"
-  "fmt"
+	"fmt"
+	"github.com/bmizerany/assert"
+	"testing"
 )
 
 // Defaults from libots.
@@ -14,27 +14,26 @@ It is the only species in its genus. The species has a worldwide distribution, w
 Pacific subspecies.`
 
 func TestLanguages(t *testing.T) {
-  languages, err := Languages()
-  assert.Equal(t, nil, err)
-  assert.Equal(t, libotsLanguages, languages)
+	languages, err := Languages()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, libotsLanguages, languages)
 }
 
 func TestParse(t *testing.T) {
-  article, err := Parse(sampleText, "en")
-  assert.Equal(t, nil, err)
-  assert.Equal(t, "en", article.Language)
+	article, err := Parse(sampleText, "en")
+	assert.Equal(t, nil, err)
+	assert.Equal(t, "en", article.Language)
 }
 
 func TestKeywords(t *testing.T) {
-  article, _ := Parse(sampleText, "en")
-  keywords := article.Keywords()
-  assert.Equal(t, []string{"species", "turtle", "subspecies", "pacific", "atlantic"}, keywords)
+	article, _ := Parse(sampleText, "en")
+	keywords := article.Keywords()
+	assert.Equal(t, []string{"species", "turtle", "subspecies", "pacific", "atlantic"}, keywords)
 }
 
 func TestArticleSentences(t *testing.T) {
-  article, _ := Parse(sampleText, "en")
-  summary := article.Sentences(1)
-  fmt.Printf("%+v\n", summary)
-  // assert.Equal(t, []Summary{Summary{"test", 1.0}}, summary)
+	article, _ := Parse(sampleText, "en")
+	summary := article.Sentences(1)
+	fmt.Printf("%+v\n", summary)
+	// assert.Equal(t, []Summary{Summary{"test", 1.0}}, summary)
 }
-
