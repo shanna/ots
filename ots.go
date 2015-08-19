@@ -17,6 +17,7 @@ import (
 )
 
 func init() {
+	// Set the dictionary path relative to the installed library path.
 	_, filename, _, _ := runtime.Caller(0)
 	cdir := C.CString(filepath.Join(filepath.Dir(filename), "dictionaries"))
 	defer C.free(unsafe.Pointer(cdir))
@@ -37,7 +38,9 @@ func Languages() (languages []string, err error) {
 }
 
 type Article struct {
-	pointer  *C.OtsArticle
+	pointer *C.OtsArticle
+
+	// Language used to parse the article text.
 	Language string
 }
 
@@ -65,33 +68,44 @@ func (a Article) Keywords() []string {
 	return strings.Split(title, ",") // TODO: Sort?
 }
 
-type Summary struct {
-	Sentences []Sentence
+// I can't figure out how to pass the sentences slice array Go -> C -> Go so I'm
+// wrapping it in this struct which is easy to pass using an unsafe.Pointer.
+type summary struct {
+	Sentences Sentences
 }
 
 type Sentence struct {
-	Sentence string
-	Score    float64
+	Text  string
+	Score float64
 }
+
+// Sortable []Sentence collection by the Sentence.Score field.
+// See sort.Sort() and the sort.Interface.
+type Sentences []Sentence
+
+func (s Sentences) Len() int           { return len(s) }
+func (s Sentences) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s Sentences) Less(i, j int) bool { return s[i].Score < s[j].Score }
 
 //export summary_append
 func summary_append(csummary unsafe.Pointer, csentence *C.char, cscore C.float) {
-	summary := (*Summary)(csummary)
-	summary.Sentences = append(summary.Sentences, Sentence{C.GoString(csentence), float64(cscore)})
+	s := (*summary)(csummary)
+	s.Sentences = append(s.Sentences, Sentence{C.GoString(csentence), float64(cscore)})
 }
 
-func (a Article) Sentences(sentences int) *Summary {
+func (a Article) sentences() Sentences {
+	s := &summary{}
+	C.ots_article_summary(a.pointer, unsafe.Pointer(s))
+	sort.Sort(s.Sentences)
+	return s.Sentences
+}
+
+func (a Article) Sentences(sentences int) Sentences {
 	C.ots_highlight_doc_lines(a.pointer, C.int(sentences))
-
-	summary := &Summary{Sentences: []Sentence{}} // TODO: NewSummary
-	C.ots_article_summary(a.pointer, unsafe.Pointer(summary))
-	return summary
+	return a.sentences()
 }
 
-func (a Article) Percentage(percentage int) *Summary {
+func (a Article) Percentage(percentage int) Sentences {
 	C.ots_highlight_doc(a.pointer, C.int(percentage))
-
-	summary := &Summary{Sentences: []Sentence{}} // TODO: NewSummary
-	C.ots_article_summary(a.pointer, unsafe.Pointer(summary))
-	return summary
+	return a.sentences()
 }
