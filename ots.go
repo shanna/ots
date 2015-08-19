@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"sort"
 	"strings"
@@ -85,7 +86,7 @@ type Sentences []Sentence
 
 func (s Sentences) Len() int           { return len(s) }
 func (s Sentences) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s Sentences) Less(i, j int) bool { return s[i].Score < s[j].Score }
+func (s Sentences) Less(i, j int) bool { return s[i].Score > s[j].Score }
 
 //export summary_append
 func summary_append(csummary unsafe.Pointer, csentence *C.char, cscore C.float) {
@@ -97,6 +98,14 @@ func (a Article) sentences() Sentences {
 	s := &summary{}
 	C.ots_article_summary(a.pointer, unsafe.Pointer(s))
 	sort.Sort(s.Sentences)
+
+	// Not sure if I should really attempt whitespace cleanup or not :/
+	spaces := regexp.MustCompile(`\s+`)
+	for i, _ := range s.Sentences {
+		s.Sentences[i].Text = spaces.ReplaceAllString(s.Sentences[i].Text, ` `)
+		s.Sentences[i].Text = strings.TrimSpace(s.Sentences[i].Text)
+	}
+
 	return s.Sentences
 }
 

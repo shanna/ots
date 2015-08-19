@@ -1,7 +1,6 @@
 package ots
 
 import (
-	"fmt"
 	"github.com/bmizerany/assert"
 	"testing"
 )
@@ -32,8 +31,12 @@ func TestKeywords(t *testing.T) {
 }
 
 func TestArticleSentences(t *testing.T) {
+	expect := Sentences{
+		Sentence{"The hawksbill turtle is a critically endangered sea turtle belonging to the family Cheloniidae.", 48},
+		Sentence{"The species has a worldwide distribution, with Atlantic and Pacific subspecies.", 20},
+	}
+
 	article, _ := Parse(sampleText, "en")
-	summary := article.Sentences(1)
-	fmt.Printf("%+v\n", summary)
-	// assert.Equal(t, []Summary{Summary{"test", 1.0}}, summary)
+	summary := article.Sentences(2)
+	assert.Equal(t, expect, summary)
 }
