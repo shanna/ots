@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"unsafe"
 )
 
@@ -40,7 +41,7 @@ func Languages() (languages []string, err error) {
 
 type Article struct {
 	pointer *C.OtsArticle
-
+	guard   *sync.Mutex
 	// Language used to parse the article text.
 	Language string
 }
@@ -48,6 +49,7 @@ type Article struct {
 func Parse(text string, language string) (*Article, error) {
 	article := &Article{
 		pointer:  C.ots_new_article(),
+		guard:    &sync.Mutex{},
 		Language: language,
 	}
 
@@ -109,12 +111,16 @@ func (a Article) sentences() Sentences {
 	return s.Sentences
 }
 
-func (a Article) Sentences(sentences int) Sentences {
+func (a *Article) Sentences(sentences int) Sentences {
+	a.guard.Lock()
+	defer a.guard.Unlock()
 	C.ots_highlight_doc_lines(a.pointer, C.int(sentences))
 	return a.sentences()
 }
 
-func (a Article) Percentage(percentage int) Sentences {
+func (a *Article) Percentage(percentage int) Sentences {
+	a.guard.Lock()
+	defer a.guard.Unlock()
 	C.ots_highlight_doc(a.pointer, C.int(percentage))
 	return a.sentences()
 }
