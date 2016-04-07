@@ -19,9 +19,12 @@ ots is an interface to libots - The [Open Text Summarizer](http://libots.sourcef
 ### OSX
 
 ```
-  brew install pkg-config libxml2 glib
+  brew install pkg-config glib
   go get github.com/shanna/ots
 ```
+
+If ots complains about missing libxml2 headers you may need to grab the xcode developer tools
+again. Trigger an install with `xcode-select --install`.
 
 ## Usage
 
