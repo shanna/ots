@@ -1,5 +1,8 @@
 #include "ots.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+
 // Don't blame me, blame libots. It looks like a constant but isn't.
 char *DICTIONARY_DIR = NULL;
 
