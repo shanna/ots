@@ -2,6 +2,7 @@ package ots
 
 /*
 #cgo pkg-config: glib-2.0 libxml-2.0
+#cgo CFLAGS: -std=gnu99
 #include "ots.h"
 */
 import "C"
@@ -26,6 +27,7 @@ func init() {
 	C.ots_dictionary_dir_set(cdir)
 }
 
+// Languages returns parsable languages.xml from libots.
 func Languages() (languages []string, err error) {
 	files, err := ioutil.ReadDir(C.GoString(C.ots_dictionary_dir_get()))
 
@@ -39,6 +41,7 @@ func Languages() (languages []string, err error) {
 	return languages, err
 }
 
+// Article parsing result.
 type Article struct {
 	pointer *C.OtsArticle
 	guard   *sync.Mutex
@@ -46,6 +49,7 @@ type Article struct {
 	Language string
 }
 
+// Parse a text string with libots.
 func Parse(text string, language string) (*Article, error) {
 	article := &Article{
 		pointer:  C.ots_new_article(),
@@ -66,6 +70,7 @@ func Parse(text string, language string) (*Article, error) {
 	return article, nil
 }
 
+// Keywords from the currect Article.
 func (a Article) Keywords() []string {
 	title := C.GoString(a.pointer.title)
 	return strings.Split(title, ",") // TODO: Sort?
@@ -77,12 +82,13 @@ type summary struct {
 	Sentences Sentences
 }
 
+// Sentence from the current Article.
 type Sentence struct {
 	Text  string
 	Score float64
 }
 
-// Sortable []Sentence collection by the Sentence.Score field.
+// Sentences sortable Sentence collection by Sentence.Score field.
 // See sort.Sort() and the sort.Interface.
 type Sentences []Sentence
 
@@ -103,7 +109,7 @@ func (a Article) sentences() Sentences {
 
 	// Not sure if I should really attempt whitespace cleanup or not :/
 	spaces := regexp.MustCompile(`\s+`)
-	for i, _ := range s.Sentences {
+	for i := range s.Sentences {
 		s.Sentences[i].Text = spaces.ReplaceAllString(s.Sentences[i].Text, ` `)
 		s.Sentences[i].Text = strings.TrimSpace(s.Sentences[i].Text)
 	}
@@ -111,6 +117,7 @@ func (a Article) sentences() Sentences {
 	return s.Sentences
 }
 
+// Sentences by count gathered from the current Article.
 func (a *Article) Sentences(sentences int) Sentences {
 	a.guard.Lock()
 	defer a.guard.Unlock()
@@ -118,6 +125,7 @@ func (a *Article) Sentences(sentences int) Sentences {
 	return a.sentences()
 }
 
+// Percentage of sentances from current Article.
 func (a *Article) Percentage(percentage int) Sentences {
 	a.guard.Lock()
 	defer a.guard.Unlock()
